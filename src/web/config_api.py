@@ -130,6 +130,9 @@ def register(mcp) -> None:
             "merge_threshold": sh.config.get("merge_threshold", 75),
             "transport": sh.config.get("transport", "stdio"),
             "buckets_dir": sh.config.get("buckets_dir", ""),
+            # MCP OAuth 鉴权开关。默认 true（强制 OAuth）。前端「⑥ MCP 连接」面板用它
+            # 渲染一键开关；关掉后 /mcp 免认证直连（供自有前端 / GPT / GLM 等）。
+            "mcp_require_auth": bool(sh.config.get("mcp_require_auth", True)),
         })
 
 
@@ -224,6 +227,14 @@ def register(mcp) -> None:
             except (TypeError, ValueError):
                 pass
 
+        # --- MCP OAuth 鉴权开关（mcp_require_auth）---
+        # 注意：该值在进程启动时被读入 server.py 的 MCP 鉴权中间件闭包，运行时改
+        # sh.config 不会即时生效，必须 persist 到 config.yaml 后重启进程才真正切换。
+        # 这里仍同步 sh.config，让 /api/config GET 能回显「已保存、待重启生效」的值。
+        if "mcp_require_auth" in body:
+            sh.config["mcp_require_auth"] = bool(body["mcp_require_auth"])
+            updated.append("mcp_require_auth")
+
         # --- Surfacing defaults (breath/feel token & result caps) ---
         if "surfacing" in body and isinstance(body["surfacing"], dict):
             sf = sh.config.setdefault("surfacing", {})
@@ -274,6 +285,9 @@ def register(mcp) -> None:
                         save_config["merge_threshold"] = int(body["merge_threshold"])
                     except (TypeError, ValueError):
                         pass
+
+                if "mcp_require_auth" in body:
+                    save_config["mcp_require_auth"] = bool(body["mcp_require_auth"])
 
                 if "surfacing" in body and isinstance(body["surfacing"], dict):
                     sc_sf = save_config.setdefault("surfacing", {})

@@ -2379,6 +2379,13 @@
           </select>
         </div>
         <div id="emb-preset-hint" style="margin-top:-4px;margin-bottom:10px;padding-left:122px;font-size:11px;color:var(--text-light);line-height:1.6;">先选服务商，会自动填好 Base URL 和正确的模型名（省得填错 model 名报 400）。</div>
+        <div style="margin:0 0 12px;padding:9px 12px;background:rgba(184,153,98,0.08);border-radius:6px;font-size:11px;color:var(--text-light);line-height:1.8;">
+          <b style="color:var(--text-dim);">怎么选（按服务器所在地区）</b><br>
+          · <b>美国 / 海外服务器</b>：建议用 Gemini 云端，就近低延迟。<br>
+          · <b>中国大陆服务器</b>：建议用硅基流动 SiliconFlow，国内域名直连快。<br>
+          · <b>最优、最稳</b>：本地 Ollama bge-m3，离线不出网、无跨境延迟、不耗 key 额度。<br>
+          · 跨区域用（如美国机连国内 API）务必给服务器挂梯子 / 代理，否则易超时或报 400。
+        </div>
         <div id="emb-key-notice" style="display:none;font-size:12px;color:var(--warning);margin-bottom:10px;padding:7px 10px;background:rgba(184,153,98,0.08);border-radius:4px;line-height:1.6;">
           <svg class="icon icon-warn" aria-hidden="true"><use href="#i-warn"></use></svg> Ombre Brain 必须配置向量化 Embedding API Key 才能正常使用。未配置时语义检索完全不可用，记忆系统无法运作。请在下方填入 Key 并点击「保存 Key」，保存后立即生效。
         </div>
@@ -2628,7 +2635,7 @@
     <div class="config-section" id="sec-mcp">
       <h3>⑥ MCP 配置</h3>
       <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.7;">
-        生成 Claude Desktop / claude.ai 的 MCP 连接配置。本服务拆成两个端点（主 + 副），对应 claude.ai 5 工具上限的限制。
+        生成 Claude Desktop / claude.ai 的 MCP 连接配置。12 个工具全在一个端点 /mcp 上，只需连这一条。
       </div>
 
       <!-- 模式切换 -->
@@ -2663,23 +2670,35 @@
         <div style="font-weight:600;font-size:13px;margin-bottom:8px;">端点地址</div>
         <div style="background:var(--surface-solid);border-radius:11px;padding:12px 14px;font-family:monospace;font-size:12px;line-height:2;box-shadow:inset 2px 2px 5px var(--shadow-dark-subtle),inset -2px -2px 4px var(--shadow-light);">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-            <span style="color:var(--text-dim);font-size:11px;min-width:60px;">主 /mcp</span>
+            <span style="color:var(--text-dim);font-size:11px;min-width:60px;">/mcp</span>
             <span id="mcp-url-main" style="flex:1;color:var(--text);word-break:break-all;"></span>
             <button onclick="copyMcpUrl('main')" title="复制" style="padding:3px 8px;font-size:11px;white-space:nowrap;background:none;border:1px solid var(--border);border-radius:3px;cursor:pointer;color:var(--text-dim);"><i data-lucide="copy"></i></button>
           </div>
-          <div style="border-top:1px solid rgba(150,138,116,0.12);margin:6px 0;"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-            <span style="color:var(--text-dim);font-size:11px;min-width:60px;">副 /mcp-extra</span>
-            <span id="mcp-url-extra" style="flex:1;color:var(--text);word-break:break-all;"></span>
-            <button onclick="copyMcpUrl('extra')" title="复制" style="padding:3px 8px;font-size:11px;white-space:nowrap;background:none;border:1px solid var(--border);border-radius:3px;cursor:pointer;color:var(--text-dim);"><i data-lucide="copy"></i></button>
-          </div>
         </div>
+        <div style="margin-top:6px;font-size:11px;color:var(--text-light);">12 个工具已合并到单一连接器 /mcp，只需连这一条。</div>
         <div id="mcp-copy-msg" style="margin-top:4px;font-size:11px;color:var(--positive);min-height:16px;"></div>
+      </div>
+
+      <!-- OAuth 鉴权开关 -->
+      <div style="margin:18px 0;padding:14px;background:var(--surface-solid);border-radius:11px;box-shadow:inset 2px 2px 5px var(--shadow-dark-subtle),inset -2px -2px 4px var(--shadow-light);">
+        <div style="font-weight:600;font-size:13px;margin-bottom:8px;">OAuth 鉴权</div>
+        <div class="config-row" style="align-items:center;">
+          <label>连接鉴权</label>
+          <select id="cfg-mcp-auth" style="flex:1;">
+            <option value="true">开启 OAuth（Claude.ai 网页版 / Claude Code 远程需要）</option>
+            <option value="false">关闭 · 免认证直连（自有前端 / GPT / GLM）</option>
+          </select>
+          <button type="button" onclick="saveMcpAuth()" title="保存并写入 config.yaml" style="margin-left:8px;padding:0 12px;height:32px;font-size:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="save"></i> 保存</button>
+          <span id="mcp-auth-msg" style="margin-left:8px;font-size:11px;"></span>
+        </div>
+        <div style="margin-top:6px;font-size:11px;color:var(--text-light);line-height:1.7;">
+          改动写入 config.yaml，<b>需重启服务后生效</b>。关闭后任何能访问 /mcp 的人都能读写记忆，请勿裸奔公网（放内网，或在反代层另加一道鉴权）。
+        </div>
       </div>
 
       <!-- 操作按钮 -->
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <button class="btn-primary" onclick="copyAllMcpUrls()" title="一键复制两条链接"><i data-lucide="copy"></i> 复制全部</button>
+        <button class="btn-primary" onclick="copyAllMcpUrls()" title="复制 /mcp 链接"><i data-lucide="copy"></i> 复制链接</button>
         <button onclick="exportClaudeDesktopConfig()" title="导出 claude_desktop_config.json" style="padding:7px 14px;font-size:13px;border:1px solid var(--border);background:none;border-radius:2px;cursor:pointer;font-family:inherit;color:var(--text);display:inline-flex;align-items:center;gap:6px;"><i data-lucide="download"></i> desktop config</button>
       </div>
 
@@ -5703,6 +5722,8 @@ async function loadConfig() {
     refreshEmbInfo();
     refreshEnvConfig();
     document.getElementById('cfg-merge').value = cfg.merge_threshold || 75;
+    var mcpAuthEl = document.getElementById('cfg-mcp-auth');
+    if (mcpAuthEl) mcpAuthEl.value = cfg.mcp_require_auth ? 'true' : 'false';
     var sf = cfg.surfacing || {};
     document.getElementById('cfg-sf-breath-results').value = sf.breath_max_results || 20;
     document.getElementById('cfg-sf-breath-tokens').value = sf.breath_max_tokens || 10000;
@@ -6657,22 +6678,43 @@ function _getMcpOrigin() {
   return 'http://127.0.0.1:' + port;
 }
 
+async function saveMcpAuth() {
+  const msg = document.getElementById('mcp-auth-msg');
+  const val = document.getElementById('cfg-mcp-auth').value === 'true';
+  try {
+    const res = await authFetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mcp_require_auth: val, persist: true }),
+    });
+    if (!res) return;
+    const result = await res.json();
+    if (result.ok) {
+      msg.style.color = 'var(--positive)';
+      msg.textContent = '已保存，重启服务后生效';
+    } else {
+      msg.style.color = 'var(--negative)';
+      msg.textContent = result.error || '保存失败';
+    }
+  } catch (e) {
+    msg.style.color = 'var(--negative)';
+    msg.textContent = '请求失败: ' + e.message;
+  }
+}
+
 function renderMcpUrls() {
   const origin = _getMcpOrigin();
   const mainUrl = origin + '/mcp';
-  const extraUrl = origin + '/mcp-extra';
   document.getElementById('mcp-url-main').textContent = mainUrl;
-  document.getElementById('mcp-url-extra').textContent = extraUrl;
   // 更新 JSON 预览
-  const cfg = _buildClaudeDesktopConfig(mainUrl, extraUrl);
+  const cfg = _buildClaudeDesktopConfig(mainUrl);
   document.getElementById('mcp-json-preview').textContent = JSON.stringify(cfg, null, 2);
 }
 
-function _buildClaudeDesktopConfig(mainUrl, extraUrl) {
+function _buildClaudeDesktopConfig(mainUrl) {
   return {
     mcpServers: {
-      "ombre-brain": { url: mainUrl, type: "http" },
-      "ombre-brain-extra": { url: extraUrl, type: "http" }
+      "ombre-brain": { url: mainUrl, type: "http" }
     }
   };
 }
@@ -6685,7 +6727,7 @@ function onMcpModeChange() {
 }
 
 function copyMcpUrl(which) {
-  const el = document.getElementById(which === 'main' ? 'mcp-url-main' : 'mcp-url-extra');
+  const el = document.getElementById('mcp-url-main');
   const text = el?.textContent || '';
   navigator.clipboard.writeText(text).then(() => {
     const msg = document.getElementById('mcp-copy-msg');
@@ -6695,17 +6737,15 @@ function copyMcpUrl(which) {
 
 function copyAllMcpUrls() {
   const main = document.getElementById('mcp-url-main')?.textContent || '';
-  const extra = document.getElementById('mcp-url-extra')?.textContent || '';
-  navigator.clipboard.writeText(main + '\n' + extra).then(() => {
+  navigator.clipboard.writeText(main).then(() => {
     const msg = document.getElementById('mcp-copy-msg');
-    if (msg) { msg.textContent = '已复制两条链接'; setTimeout(() => { msg.textContent = ''; }, 2500); }
+    if (msg) { msg.textContent = '已复制 /mcp 链接'; setTimeout(() => { msg.textContent = ''; }, 2500); }
   });
 }
 
 function exportClaudeDesktopConfig() {
   const mainUrl = document.getElementById('mcp-url-main')?.textContent || '';
-  const extraUrl = document.getElementById('mcp-url-extra')?.textContent || '';
-  const cfg = _buildClaudeDesktopConfig(mainUrl, extraUrl);
+  const cfg = _buildClaudeDesktopConfig(mainUrl);
   const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
